@@ -1,0 +1,165 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1.0in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage{color,soul}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{wrapfig}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{subcaption}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{algorithm}
+\usepackage{fancyvrb}
+\usepackage{breqn}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{arydshln}
+\usepackage{amsfonts}
+\usepackage[noend]{algpseudocode}
+
+
+\usepackage{microtype}
+\usepackage{booktabs} % for professional tables
+\usepackage{marginnote}
+\usepackage{bbm}
+\usepackage{float}
+\usepackage[shortlabels]{enumitem}
+\usepackage{tikz}
+\usepackage{ifthen}
+\usepackage{stmaryrd}
+\usepackage{pifont}
+\usepackage{nicefrac}
+
+%\usepackage[labelsep=quad,indention=10pt]{subfig}
+%\captionsetup*[subfigure]{position=bottom}
+
+\graphicspath{{images/}{../images/}}
+
+\usepackage{subfiles}
+
+\usepackage{blindtext}
+\usepackage{etoolbox}
+
+\usepackage{main}
+
+
+%% TO TURN ON BIB FOR CHAPTER (when compiling chapters separately)
+% \def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
+% %% TO TURN OFF BIB FOR EACH CHAPTER, (for compiling the whole thesis)
+\def\biblio{}
+
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\avg}{avg}
+
+\DeclareRobustCommand{\word}[1]{{\sethlcolor{purple}\hl{#1}}}
+\DeclareRobustCommand{\todo}[1]{\textbf{\textcolor{red}{TODO: #1}}}
+\DeclareRobustCommand{\missingcites}[1]{\textbf{\textcolor{magenta}{(missing citations: #1)}}}
+
+\newcommand\ignore[1]{}
+\newcommand{\lexsub}{\textsc{lexsub}\xspace}
+\newcommand{\ppdbsc}{\textsc{ppdbsc}\xspace}
+\newcommand{\addcos}{\textsc{AddCos}\xspace}
+
+\begin{document}
+
+\newcommand{\mainfile}{}
+
+\begin{titlepage}
+
+{\centering \scshape\LARGE Compositional and Modular Models for Reasoning over Text \par}
+{\centering \scshape\large Ph.D. Thesis Proposal \par}
+
+\vspace{1cm}
+
+{\centering  Nitish Gupta \par}
+{\centering  Department of Computer and Information Science \par}
+{\centering  University of Pennsylvania \par}
+{\centering  \texttt{nitishg@seas.upenn.edu} \par}
+
+\vspace{12pt}
+{\centering \large \today \par}
+
+\vspace{1cm}
+
+\textit{Ph.D. Thesis Advisor:}
+
+Prof. Dan Roth
+
+\vspace{12pt}
+\textit{Ph.D. Thesis Committee:}
+
+Prof. Mitch Marcus (Chair)
+
+Prof. Lyle Ungar
+
+Prof. Chris Callison-Burch
+
+Prof. Luke Zettlemoyer
+
+\subfile{sections/00-abstract}
+\end{titlepage}
+
+\subfile{sections/00-publications}
+
+\pagebreak
+
+\tableofcontents
+
+\pagebreak
+
+
+\subfile{sections/01-introduction}
+
+\pagebreak
+
+% \section{Background} % 3pp
+% \label{sec:background}
+% \subfile{sections/background}
+
+% \pagebreak
+
+% \section{Clustering paraphrases by word sense}
+% \label{sec:clustering}
+% \subfile{sections/clustering}
+%
+% \pagebreak
+%
+% \section{Using Sense Clusters to improve lexical substitution}
+% \label{sec:lexsub}
+% \subfile{sections/lexsub}
+%
+% \pagebreak
+%
+% \section{Inducing taxonomic structure over noun paraphrases}
+% \label{sec:ti}
+% \subfile{sections/ti}
+%
+% \pagebreak
+%
+% \section{Inducing intensity structure over adjective paraphrases}
+% \label{sec:scalaradj}
+% \subfile{sections/scalaradj}
+
+\pagebreak
+
+\appendix
+
+\section{Appendix}
+\label{sec:appendix}
+\subfile{sections/99-appendix}
+
+\pagebreak
+%
+\bibliographystyle{apalike}
+\bibliography{references/primary}
+
+
+\end{document}

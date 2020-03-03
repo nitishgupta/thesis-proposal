@@ -1,0 +1,17 @@
+\documentclass[main.tex]{subfiles}
+\begin{document}
+
+\begin{abstract}
+
+In the last decade, deep artificial neural network models have become ubiquitous and have shown to achieve surprisingly exceptional performance on various natural language processing tasks.
+Despite such successes, several studies have shown that these models fail embarrassingly on seemingly trivial problems. The black-box nature of such models makes it difficult to interpret and debug their decision making process.
+In this thesis, I focus on developing modular and compositional models that reason over natural language, specifically models that read and answer questions against text as context.
+My work focuses on models that provide an understanding of the question semantics in terms of a formal executable parse which is composed of learnable modules that can perform reasoning over open domain text.
+Such models are desirable for various reasons -- (a) being inherently compositional in nature, such models should be better able to capture the compositional nature of language and reasoning in general, which should result in accurate models, (b) the structured parse of the question and the outputs of intermediate modules make the model's decision making process interpretable and debuggable, (c) the modular nature of the model allows for transfer of supervision and reasoning capability across various domains and tasks.
+Until now, we have shown how models that perform natural language and symbolic reasoning over text can be designed and trained using end-goal supervision [2, 3]. We also showed that the use of auxiliary losses and external supervision leads to better performance. While such compositional models should be interpretable, we have also shown that it is difficult to achieve interpretability when trained in an end-to-end manner [1]. We have proposed a systematic and quantitative evaluation of interpretability and introduced ways to achieve it.
+Going forward, I am focussing on two main directions -- (a) understanding and improving systematic generalization in such models, and (b) extending such models to achieve transfer of reasoning capabilities across domains and tasks by sharing modules and supervision.
+The biggest challenge in pursuing this direction, and also what excites me the most, is trying to find a good middle-ground between the neatness of formal logic and fuzziness of reasoning over natural language.
+
+\end{abstract}
+
+\end{document}

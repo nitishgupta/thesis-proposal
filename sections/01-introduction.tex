@@ -1,0 +1,53 @@
+\documentclass[main.tex]{subfiles}
+\begin{document}
+
+\section{Introduction} % 3pp
+\label{sec:introduction}
+
+We, as humans who understand how the world functions and \word{ubiquitously} use language to communicate, are able to seamlessly reason about natural language text and answer questions about the world.  As a research community working towards achieving artificial intelligence, we would like to develop agents that are able to understand natural language and perform reasoning in a manner humans do.  For example, we would like machines to be able to answer questions such as \textit{``Which country has the highest per capita carbon dioxide emission?''} and \textit{``What was the longest gap between two Radiohead albums?''}.  Answering such questions goes beyond shallow lexical understanding of words; it requires an agent to understand concepts and events described in text, associate properties with them, and perform quantitative reasoning, as described linguistically by \textit{highest} and \textit{longest gap}.  In this thesis, we aim to develop models that are able to perform \textit{question answering}, i.e., map a natural language question to an answer given relevant context in a textual form.
+
+Consider the question \textit{``Which country has the highest per capita carbon dioxide emission?''} --- an agent would ideally decompose this problem into multiple interrelated but simpler problems and answer the orginal question by solving these sub-problems.  The most likely plan an agent could follow is to locate the \textit{``countries''} mentioned in the context, for each one of them find their respective "per capita carbon dioxide emission", find the highest value amongst these and provide as answer the country with this emission value.  Developing models to answer such questions, even against a single paragraph of text as context, poses a variety of challenges -- primarily a system needs to be able to understand the compositional nature of language and reasoning in general, specifically the question in this case. Furthermore, a system needs to understand the concept of \textit{``countries''} and locate its instantiations in text, it needs to tackle various linguistic variations in which "per capita carbon dioxide emission" might be mentioned, and the system should also be able to perform symbolic reasoning required to perform the \textit{highest} operation.  Similarly, the question \textit{``What was the longest gap between two Radiohead albums?''} is underspecified and poses different challenges; amongst many, it requires the system to infer that the linguistic construction \textit{``longest gap''} in the context of two \textit{albums} refers to a time-span measured in years where these years are the \textit{release dates} of \textit{Radiohead albums}.
+
+Previous research to solve such problems can broadly be classified into three threads, semantic parsing, machine reading comprehension, and neural module networks.  Semantic parsing, rooted in formal semantics, aims to map a natural language utterance (e.g. question, instruction, etc.) to a logical meaning representation.  In the context of question answering, this meaning representation is usually an \textit{executable logical form}, that can be thought of as a program, which can be executed against some representation of the world to get the desired output.  Explicit modeling of \textit{compositionality} in the meaning representation makes semantic parsing a desirable approach to solve such problems.
+% i.e., the meaning of an expression can be recursively defined using the meaning of its subexpressions.
+% Modeling compositionality explicitly should help a model deal with the productivity and systematicity of natural language.
+In the context of machine learning, the logical form provides a rationale to the final outcome predicted by the model which again makes semantic parsing a good choice to develop such question answering systems.  On the other hand, semantic parsing bypasses the imporant questions of learning how to represent the world (context), and hence its usage is limited to modalities where execution can be determinisitically defined. For example, to answer questions against structured databases. \todo{$<--$ SP assumes an unambiguous representation of the world where logical forms can be deterministically executed. In our case, where the context (world) where programs are executed is itself NL, it is challenging and requires learning a representation. Why this represenation cannot be a logical MR is because it is lossy and we assume that the questions we will tackle are much more restrictive than the contexts we will be encountering.}
+Over the last decade, with the advent of large-scale neural network models for natural language processing, black-box neural models for question answering have emerged \missingcites{rc models}.
+% that map a question string to an answer string conditioned on some relevant context.
+Such models exploit the expressive representational capacity of neural networks to learn a \textit{``meaning representation''} of language expressed as continuous vectors and provides an answer to the question without resorting to explicit compositional semantics.  Such models have shown extremely good performance on standard benchmarks for machine reading comprehension, but there have also been several studies showing brittleness of these approaches~\missingcites{adversarial squad, pathologies, sears, etc.}.  Furthermore, the ``black-box'' nature of such approaches makes it difficult to interpret the model's decision making process at any scale.
+One key issue with such approaches is that they treat question answering as a problem of learning a single function to map questions and contexts to answers.  However, as decribed in the earlier, it is perhaps useful to treat question answering as a multitask problem where each instance requires solving several interrelated problems.
+Neural module networks~\missingcites{NMNs; Andreas 2016} carries this intuition forward and marries the approaches of formal semantic parsing with representation learning.  It is a class of machine learning model where an utterance is mapped to a logical form, but where this logical form is composed of predicates that are not predetermined functions but rather functions with learnable parameters (or modules).  The idea is that this set of primitive functions are learned to solve basic tasks of understanding the context which can be composed to perform higher-order reasoning. This approach decomposes the problem of learning a highly complex mapping function into the problem of learning an explicit meaning representation of the utterance and learning multiple primitive task predictors.  While extremely promising, in practice this approach has mainly been applied to visual question answering in synthetic domains.
+
+In this thesis, we aim to borrow ideas from these research directions and investigate how to further develop models for reasoning over text as context.  Specifically, we would like the models we design to have the following desiderata; (a) the model should explicitly model compositionality in language and reasoning, i.e., the model structure should imitate the linguistic and reasoning structure closely, (b) the model's decision making process should be interpretable to some some level; this allows for understanding the model behavior and opens up possibilities for debugging, (c) the model should be modular, i.e. composed of operators that are resuable; this should allow for transfer of supervision and primitive reasoning capability across various domains and tasks.
+In Chaper 1, we present a neural module network (NMN) for answering compositional questions that require multiple steps of reasoning against text as context.  We introduce modules that are capable of performing both shallow reasoning over a paragraph of text and symbolic reasoning (such as arithmetic, sorting, counting) over numbers and dates in a probabilistic and differentiable manner.  The model we present fulfils all desiderata as explained above; but learning such a model using only weak question-answer supervision is extremely challenging.  We additionally show how problem decomposition allows for using auxiliary objectives to aid learning.
+While such models are inherently interpretable by the means of the question program and the intermediate outputs of the predicates in the logical form, we show in Chapter 2 that learning from end-goal supervision does not guarantee that the modules outputs are faithful to the logical meaning representation of the question.  We find that due to the extreme expressivity of neural models, the modules do not learn their intended behavior when the only learning supervision is from the end-task.  We outline few methods to alleviate this issue; providing auxiliary supervision for module outputs, designing the formal language such that expected linguistic phenonmena have corresponding semantic predicates, and providing the correct inductive bias to the model through module architecture design.
+Ultimately,
+
+
+Some arbitrary cite~\cite{grycner2015relly} and another arbitrary newcite~\newcite{grycner2015relly}. King of arbit.
+
+% decisions made a priori about how to represent the world are necessarily lossy
+
+% logical meaning representations
+
+% the structure of the associated program/meaning representation reflects the linguistic structure of question
+
+% formal representations of language
+
+% model structure imitates reasoning and/or linguistic structure
+
+% structured representations of language
+
+% SP has bypassed questions of learning how to represent the world
+
+% can formal (compositional) representations of sentence meaning help us learn reusable operators for perception and reasoning
+
+% What sorts of linguistic phenomena should be explicitly articulated in logical meaning representations, and what distinctions should be left to learning
+
+% automatic discovery of reusable discrete operators for perception and reasoning remains a major challenge -- mike lewis work
+
+% Rather than thinking of question answering as a problem of learning a single function to map from questions and contexts to answers, it’s perhaps useful to think of it as a highly-multitask learning setting, where each problem instance is associated with a novel task, and the identity of that task is expressed only noisily in language
+
+\biblio
+
+\end{document}
