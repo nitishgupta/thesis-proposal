@@ -1,0 +1,53 @@
+\documentclass[main.tex]{subfiles}
+\begin{document}
+
+\section{Proposed Future Work} % 3pp
+\label{sec:future}
+
+Our contributions so far have focussed on developing a compositional and modular model for question answering against text that is capable of performing symbolic reasoning. The ideas presented until now can be extended and improved in various ways. For the rest of the thesis we plan to focus on these directions.
+
+\subsection{Background on Question Decomposition Meaning Represenation (QDMR)}
+Much of our future work is based off of the recently proposed resource on question decomposition meaning represenation (QDMR;~\newcite{qdmr-2020}). 
+
+\subsection{Extending reasoning capabilities}
+The model we present in Chapter 1 has limited capability in terms of handling linguistic constructions that require a symbolic interpretation.  For example, the modules we currently define cannot handle determiners such as \textit{``most''} in \textit{``Did Bernie Sanders win the most votes?''} or \textit{``more than half''} in \textit{``Who scored more than half the runs?''}. We would like to push forward in this direction and design differentiable modules that are capable of handling generalized quantifiers.
+
+\subsection{Transfer learning}
+One key advantage of modular models is the capability to reuse modules in novel contexts, domains, and tasks. We would like to pursue this direction and and as a starting step try to develop a single question answering system that can be trained and evaluated on multiple benchmarks, for example, datasets in Open Reading Benchmark~(ORB;~\newcite{dua2019-orb}) silmultaneously.
+
+\subsection{Systematic Generalization}
+% While several machine learning models show extremely good performance on standard iid-test splits, it has been shown that these models often fail to \word{characterize} the underlying linguistic phenomenon and fail to generalize in surprising ways.
+Though it seems natural that explicitly compositional models should be able to generalize better than black-box models, several works~\cite{sys-generalization-2018,closure-generalization-2020} have shown that it is not necessarily true. We would like to investigate this in the context of questions we tackle and improve model generalization on recently introduced stress test-sets~\cite{contrast-sets-2020} and challenging evaluation settings~\cite{text2sql-2018}.
+
+
+% King of arbit.
+
+
+% How do we computationally represent the meaning of language?
+% How do we automatically produce these representations from text?
+
+% decisions made a priori about how to represent the world are necessarily lossy
+
+% logical meaning representations
+
+% the structure of the associated program/meaning representation reflects the linguistic structure of question
+
+% formal representations of language
+
+% model structure imitates reasoning and/or linguistic structure
+
+% structured representations of language
+
+% SP has bypassed questions of learning how to represent the world
+
+% can formal (compositional) representations of sentence meaning help us learn reusable operators for perception and reasoning
+
+% What sorts of linguistic phenomena should be explicitly articulated in logical meaning representations, and what distinctions should be left to learning
+
+% automatic discovery of reusable discrete operators for perception and reasoning remains a major challenge -- mike lewis work
+
+% Rather than thinking of question answering as a problem of learning a single function to map from questions and contexts to answers, it’s perhaps useful to think of it as a highly-multitask learning setting, where each problem instance is associated with a novel task, and the identity of that task is expressed only noisily in language
+
+\biblio
+
+\end{document}

@@ -51,9 +51,9 @@
 
 
 %% TO TURN ON BIB FOR CHAPTER (when compiling chapters separately)
-% \def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
-% %% TO TURN OFF BIB FOR EACH CHAPTER, (for compiling the whole thesis)
-\def\biblio{}
+\def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
+%% TO TURN OFF BIB FOR EACH CHAPTER, (for compiling the whole thesis)
+% \def\biblio{}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
@@ -62,6 +62,7 @@
 \DeclareRobustCommand{\word}[1]{{\sethlcolor{purple}\hl{#1}}}
 \DeclareRobustCommand{\todo}[1]{\textbf{\textcolor{red}{TODO: #1}}}
 \DeclareRobustCommand{\missingcites}[1]{\textbf{\textcolor{magenta}{(missing citations: #1)}}}
+\DeclareRobustCommand{\missingcite}[1]{\textbf{\textcolor{magenta}{(missing citation: #1)}}}
 
 \newcommand\ignore[1]{}
 \newcommand{\lexsub}{\textsc{lexsub}\xspace}
@@ -120,6 +121,12 @@ Prof. Luke Zettlemoyer
 
 \pagebreak
 
+
+\subfile{sections/05-future}
+
+\pagebreak
+
+
 % \section{Background} % 3pp
 % \label{sec:background}
 % \subfile{sections/background}
@@ -150,16 +157,16 @@ Prof. Luke Zettlemoyer
 
 \pagebreak
 
+\bibliographystyle{apalike}
+\bibliography{references/primary}
+
+\pagebreak
+
 \appendix
 
 \section{Appendix}
 \label{sec:appendix}
 \subfile{sections/99-appendix}
-
-\pagebreak
-%
-\bibliographystyle{apalike}
-\bibliography{references/primary}
 
 
 \end{document}
