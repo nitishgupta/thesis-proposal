@@ -4,13 +4,47 @@
 \section{Proposed Future Work} % 3pp
 \label{sec:future}
 
-Our contributions so far have focussed on developing a compositional and modular model for question answering against text that is capable of performing symbolic reasoning. The ideas presented until now can be extended and improved in various ways. For the rest of the thesis we plan to focus on these directions.
+Our contributions so far have focussed on developing a compositional and modular model for question answering against text that is capable of performing symbolic reasoning. The ideas presented until now can be extended and improved in innumerable ways, though we focus on the following directions for the rest of the thesis.
 
 \subsection{Background on Question Decomposition Meaning Represenation (QDMR)}
-Much of our future work is based off of the recently proposed resource on question decomposition meaning represenation (QDMR;~\newcite{qdmr-2020}). 
+Much of our planned future work is based off of the recently proposed resource on Question Decomposition Meaning Represenation~(QDMR;~\newcite{qdmr-2020}) which we explain in this subsection.
+This resoures aims at defining a formalism, QDMR, for representing the meaning of questions that is agnostic to any context and is based on \textit{question decomposition}.
+QDMR (Figure~\ref{fig:qdmr_examples}) represents complex questions as a sequence of simpler questions that can be executed in that order to answer the original question.
+These atomic questions can be thought of as operations performed by a single predicate in a formal semantic parse or a database query (e.g. in SQL or SPARQL).
+Unlike semantic parsing though, atomic questions in QDMR are expressed in natural language with the introduction of only a small set of \textit{formal operators}.  Such usage of natural language in the meaning representation allows for representing a much diverse range of questions as compared to lossy logical meaning representation. As expected, the choice of using high-entropy natural language as the basis for meaning representation has its drawbacks.
+
+\begin{figure}[b]
+	\centering
+    \begin{subfigure}[tb]{0.45\linewidth}
+		\includegraphics[width=0.8\textwidth]{qdmr_most_example.png}
+        \caption{QDMR of \textit{``What is the keyword, which has been contained by the most number of papers?''}}
+		\label{fig:qdmr_most}
+	\end{subfigure}
+    \hfill
+    \begin{subfigure}[tb]{0.45\linewidth}
+    % \centering
+		\includegraphics[width=0.65\textwidth]{qdmr_select_example.png}
+		\caption{QDMR of \textit{``How many yards was the longest touchdown of the game?''}}
+        \label{fig:qdmr_select}
+    \end{subfigure}
+	\caption{Examples of Question Decomposition Meaning Representation (QDMR)}
+	\label{fig:qdmr_examples}
+\end{figure}
+
 
 \subsection{Extending reasoning capabilities}
-The model we present in Chapter 1 has limited capability in terms of handling linguistic constructions that require a symbolic interpretation.  For example, the modules we currently define cannot handle determiners such as \textit{``most''} in \textit{``Did Bernie Sanders win the most votes?''} or \textit{``more than half''} in \textit{``Who scored more than half the runs?''}. We would like to push forward in this direction and design differentiable modules that are capable of handling generalized quantifiers.
+The reasoning capability of the model we present in Chapter 1 is limited by the kind of modules we define. Such a model cannot answer questions that require semantic operations for which modules are not defined.  % The modules we currently define cannot handle various linguistic constructions, especially those ones that require a symboloc treatment.
+
+\paragraph{Problem}
+Our model lacks in modeling various linguistic constructions that would require a symbolic treatment. For example, our model cannot represent determiners such as \textit{``most''} in \textit{``Which player scored the most touchdowns?''} or \textit{``more than half''} in \textit{``Who scored more than half the field goals?''}.
+As one extention to our model, we would like to push forward in the direction of trying to design differentiable modules that are capable of handling such generalized quantifiers~\cite{gq-mostowski-1957}.
+
+\paragraph{Potential solution}
+Modeling determiners such as \textit{``most''}, \textit{``fewest''}, \textit{``more than 20''} etc. in a differentiable manner is challenging.
+It would require us to represent, in a probabilistic manner, the background context as sets of elements and properties associated with the elements of the sets, i.e., some kind of a key-value representation.  In turn, such a representation would require one to identify basic atomic units from the context which would act as the keys and values.  This is hard to achieve when working with natural language text.  For example, this would require one to, at the least, identify and represent ``events'', ``entities'', and their associated arguments as some discrete units.  Additionally, it would also require identifying equivalence between elements~(events, entities, etc.) and clustering different mentions of those (keys in some key-value representation).
+The model in Chapter 1 made a design choice of having tokens as the basic units of representation which becomes restrictive when we try to model such quantifiers.  As the next step we are working on having soft logical-sets of text-spans as basic units that modules work with and hope to be able to model more challenging quantifiers using this.
+
+Since learning a NMN using just question-answer supervision is challenging (Chapter 1, we decide to use QDMR annotations for the DROP dataset as gold question-program supervision which allows to focus on improving program execution.
 
 \subsection{Transfer learning}
 One key advantage of modular models is the capability to reuse modules in novel contexts, domains, and tasks. We would like to pursue this direction and and as a starting step try to develop a single question answering system that can be trained and evaluated on multiple benchmarks, for example, datasets in Open Reading Benchmark~(ORB;~\newcite{dua2019-orb}) silmultaneously.
