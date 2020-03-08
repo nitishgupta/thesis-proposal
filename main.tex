@@ -51,9 +51,9 @@
 
 
 %% TO TURN ON BIB FOR CHAPTER (when compiling chapters separately)
-% \def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
+\def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
 %% TO TURN OFF BIB FOR EACH CHAPTER, (for compiling the whole thesis)
-\def\biblio{}
+% \def\biblio{}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
@@ -68,6 +68,72 @@
 \newcommand{\lexsub}{\textsc{lexsub}\xspace}
 \newcommand{\ppdbsc}{\textsc{ppdbsc}\xspace}
 \newcommand{\addcos}{\textsc{AddCos}\xspace}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%    CHAPTER 2    %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \newcommand{\drop}{\text{DROP}}
+\newcommand{\RealR}{\mathbb{R}}
+\newcommand{\ttt}[1]{\texttt{#1}}
+
+\newcommand{\Ntokens}{N_{\text{tokens}}}
+\newcommand{\Nvalues}{N_{\text{values}}}
+\newcommand{\Dtokens}{D_{\text{tokens}}}
+\newcommand{\Dvalues}{D_{\text{values}}}
+
+\newcommand{\boldP}{\mathbf{P}}
+\newcommand{\boldProw}[1]{\mathbf{P}_{#1:}}
+\newcommand{\boldPcol}[1]{\mathbf{P}_{:#1}}
+\newcommand{\boldQ}{\mathbf{Q}}
+\newcommand{\boldQrow}[1]{\mathbf{Q}_{#1:}}
+\newcommand{\boldQcol}[1]{\mathbf{Q}_{:#1}}
+\newcommand{\boldN}{\mathbf{N}}
+\newcommand{\boldNrow}[1]{\mathbf{N}_{#1:}}
+\newcommand{\boldNcol}[1]{\mathbf{N}_{:#1}}
+\newcommand{\boldD}{\mathbf{D}}
+
+\newcommand{\typeQues}{\ttt{Q}}
+\newcommand{\typePara}{\ttt{P}}
+% \newcommand{\typeNum}{\ttt{Num}}
+% \newcommand{\typeDate}{\ttt{Date}}
+\newcommand{\typeNum}{\ttt{N}}
+\newcommand{\typeDate}{\ttt{D}}
+% \newcommand{\typeTD}{\ttt{TimeDelta}}
+\newcommand{\typeTD}{\ttt{TD}}
+\newcommand{\typeCount}{\ttt{C}}
+\newcommand{\typeSpan}{\ttt{S}}
+
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+\newcommand{\mB}[1]{\mathbf{#1}}
+
+
+\newcommand{\Wnum}{\mathbf{W_{\text{num}}}}
+\newcommand{\Wdate}{\mathbf{W_{\text{date}}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%    end of chapter 2    %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%    CHAPTER 3  %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand\drop{\textsc{DROP}}
+\newcommand\nlvr{\textsc{NLVR2}}
+\newcommand{\qatt}{q_{\text{att}}}
+
+\newcommand{\LXMERT}{\textsc{LXMERT}}
+\newcommand{\CountSumNMN}{\textsc{CountSumNMN}}
+\newcommand{\CountLayerNMN}{\textsc{CountLayerNMN}}
+\newcommand{\CountModuleNMN}{\textsc{CountModuleNMN}}
+\newcommand{\CountModuleNMNMask}{\textsc{CountModuleNMN+Mask}}
+\newcommand{\CountModuleNMNPretraining}{\textsc{CountModuleNMN+Pretraining}}
+\newcommand{\CountModuleNMNMaskPretraining}{\textsc{CountModuleNMN+Mask+Pretraining}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%  End of Chapter 3  %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \begin{document}
 
@@ -118,12 +184,17 @@ Prof. Luke Zettlemoyer
 
 
 \subfile{sections/01-introduction}
-
 \pagebreak
 
 
-\subfile{sections/05-future}
+\subfile{sections/02-nmn-drop}
+\pagebreak
 
+% \subfile{sections/03-nmn-interpret}
+% \pagebreak
+
+
+\subfile{sections/05-future}
 \pagebreak
 
 
@@ -163,8 +234,6 @@ Prof. Luke Zettlemoyer
 \pagebreak
 
 \appendix
-
-\section{Appendix}
 \label{sec:appendix}
 \subfile{sections/99-appendix}
 

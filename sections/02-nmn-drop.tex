@@ -1,0 +1,441 @@
+\documentclass[main.tex]{subfiles}
+\begin{document}
+
+\section{Neural module networks for reasoning over text} % 3pp
+\label{sec:nmn-drop}
+
+Answering complex compositional questions against text is challenging since it requires a comprehensive understanding of both the question semantics and the text against which the question needs to be answered.
+Consider the question in Figure~\ref{fig:02-nmn-overview}; a model needs to understand the compositional reasoning structure of the questions, perform accurate information extraction from the passage (eg. extract \textit{lengths}, \textit{kickers}, etc. for the \textit{field goals} and \textit{touchdowns}), and perform symbolic reasoning (eg. counting, sorting, etc.).
+
+Semantic parsing techniques have been used for compositional question understanding for a long time~\cite{zelle-1996,zettlemoyer-pccg-2005,liang-dcs-2011}, but have been limited to answering questions against structured and semi-structured knowledge sources.
+Neural module networks~(NMNS;~\newcite{nmn-2016}) extend semantic parsers by making the program executor a \emph{learned function} composed of neural network modules.
+These modules are designed to perform basic reasoning tasks and can be composed to perform complex reasoning over unstructured knowledge.
+NMNs perform well on synthetic visual question answering (VQA) domains such as CLEVR~\cite{clevr-2017} and it is appealing to apply them to answer questions over text due to their interpretable, modular, and inherently compositional nature.
+
+
+In this Chapter we present a neural module network for question answering against text as context.
+We find that it is non-trivial to extend NMNs for answering non-synthetic questions against open-domain text, where a model needs to deal with the ambiguity and variability of real-world text while performing a diverse range of reasoning.  Jointly learning the parser and executor using only QA supervision is also extremely challenging (\S\ref{sssec:challenges}).
+
+% Our contributions are two-fold: Firstly, we extend NMNs to answer compositional questions against a paragraph of text as context.
+% Specifically,
+We introduce neural modules to perform reasoning over text using distributed representations, and perform symbolic reasoning, such as arithmetic, sorting, comparisons, and counting (\S\ref{ssec:modules}).
+The modules we define are probabilistic and differentiable, which lets us maintain uncertainty about intermediate decisions and train the entire model via end-to-end differentiability.
+
+We also show that the challenges arising in learning from end-task QA supervision can be alleviated with an auxiliary loss over the intermediate latent decisions of the model.  Specifically, we introduce an unsupervised objective that provides an inductive bias to perform accurate information extraction from the context~(\S\ref{sssec:hloss}).
+Additionally, we show that providing heuristically-obtained supervision for question programs and outputs for intermediate modules in a program (\S\ref{sssec:hqsup}) for a small subset of the training data (5--10\%) is sufficient for accurate learning.
+
+% We experiment on 21,800 questions from the recently proposed DROP dataset \citep{DROPDua17} that are covered by our designed modules showing that our model, which has interpretable intermediate outputs by design, significantly outperforms state-of-the-art blackbox models on this dataset.
+We experiment on 21,800 questions from the recently proposed DROP dataset~\cite{drop-2019} that are heuristically chosen based on their first n-gram such that they are covered by our designed modules.  % based on first n-gram analysis. % and chosen based on their first n-gram.
+This is a significantly-sized subset that poses a wide variety of reasoning challenges and allows for controlled development and testing of models.
+We show that our model, which has interpretable intermediate outputs by design, significantly outperforms state-of-the-art black box models on this dataset.
+We conclude with a discussion of the challenges of pushing NMNs to the entire DROP dataset, where some questions require reasoning that is hard to design modules for.
+
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{02-nmn-overview.png}
+    \caption{\textbf{Model Overview}: Given a question, our model parses it into a program composed of neural modules. This program is executed against the context  to compute the final answer. The modules operate over soft attention values (on the question, passage, numbers, and dates). For example, \ttt{filter} takes as input attention over the question (\textit{in the second quarter}) and filters the output of the \ttt{find} module by producing an attention mask over tokens that belong to the \textit{second quarter}.}
+    \label{fig:02-nmn-overview}
+\end{figure}
+
+
+\subsection{Neural Module Networks}
+\label{ssec:background}
+Consider the question \textit{``Who kicked the longest field goal in the second quarter?''} in Figure~\ref{fig:02-nmn-overview}. Multiple reasoning steps are needed to answer such a question: find all instances of ``field goal'' in the paragraph, select the ones ``in the second quarter'', find their lengths, compute the ``longest'' of them, and then find ``who kicked'' it.
+We would like to develop machine reading models that are capable of understanding the context and the compositional semantics of such complex questions in order to provide the correct answer, ideally while also explaining the reasoning that led to that answer.
+
+% Contents: How NMN enable exactly what we want. Have desirable properties such as interpretability, e2e diff., and modular.
+Neural module networks (NMN) capture this intuition naturally, which makes them a good fit to solve reasoning problems like these.
+A NMN would parse such a question into an executable program, such as \ttt{relocate(find-max-num(filter(find())))}, whose execution against the given paragraph yields the correct answer.  These programs capture the abstract compositional reasoning structure required to answer the question correctly and are composed of learnable modules designed to solve sufficiently independent reasoning tasks.  For example, the \ttt{find} module should ground the question span ``field goal'' to its various occurrences in the paragraph; the module \ttt{find-max-num} should output the span amongst its input that is associated with the largest length; and finally, the \ttt{relocate} module should find ``who kicked'' the \textit{field goal} corresponding to its input span.
+
+\subsubsection{Components of a NMN for Text}
+\label{sssec:components}
+
+\textbf{Modules.}
+To perform natural language and symbolic reasoning over different types of information, such as text, numbers, and dates, we define a diverse set of differentiable modules to operate over these different data types.  We describe these modules and the data types in \S\ref{ssec:modules}.
+
+\textbf{Contextual Token Representations.}
+Our model represents the question $q$ as $\boldQ \in \RealR^{n \times d}$ and the context paragraph $p$ as $\boldP \in \RealR^{m \times d}$ using contextualized token embeddings. These are outputs of either the same bidirectional-GRU or a pre-trained BERT~\cite{bert-2018} model. Here $n$ and $m$ are the number of tokens in the question and the paragraph, respectively.
+% Appendix \S\ref{app:qenc} contains details about how these contextual embeddings are produced.
+
+\textbf{Question Parser.}
+We use an encoder-decoder model with attention to map the question into an executable program.  Similar to N2NMN~\cite{n2nmn-2017}, at each timestep of decoding, the attention that the parser puts on the question is available as a side argument to the module produced at that timestep during execution.  This lets the modules have access to question information without making hard decisions about which question words to put into the program.
+
+In our model, the data types of the inputs and output of modules automatically induce a type-constrained grammar which lends itself to top-down grammar-constrained decoding as performed by~\newcite{krishnamurthy-wikitable-2017}.  This ensures that the decoder always produces well-typed programs.
+% For example, if a module $f_{1}$ inputs a \textit{number}, and $f_{2}$ outputs a \textit{date}, then \ttt{$f_{1}(f_{2})$} is invalid and would not be explored while decoding.
+% For example, if a module $f_{1}$ inputs a \textit{number}, and $f_{2}$ outputs a \textit{date}, then \ttt{$f_{1}(f_{2})$} is invalid and would not be explored while decoding.
+The output of the decoder is a linearized abstract syntax tree (in an in-order traversal).
+% See \S\ref{app:parser} for details.
+
+\textbf{Learning.}
+We define our model probabilistically, i.e., for any given program $\mathbf{z}$, we can compute the likelihood of the gold-answer $p(y^{*}|\mathbf{z})$.
+Combined with the likelihood of the program under the question-parser model $p(\mathbf{z}|q)$, we can maximize the marginal likelihood of the answer by enumerating all possible programs; $J = \sum_{\mathbf{z}} p(y^{*}|\mathbf{z}) p(\mathbf{z}|q)$.
+Since the space of all programs is intractable, we run beam search to enumerate top-K programs and maximize the approximate marginal-likelihood.
+
+
+\subsubsection{Learning Challenges in NMN for Text}
+\label{sssec:challenges}
+As mentioned above, the question parser and the program executor both contain learnable parameters. Each of them is challenging to learn in its own right and joint training further exacerbates the situation.
+
+\textbf{Question Parser.}
+Our model needs to parse free-form real-world questions into the correct program structure and identify its arguments (e.g. "who kicked", "field goal", etc.). This is challenging since the questions are not generated from a small fixed grammar (unlike CLEVR), involve lexical variability, and have no program supervision. Additionally, many incorrect programs can yield the same correct answer thus training the question parser to highly score incorrect interpretations.
+
+\textbf{Program Executor.}
+The output of each intermediate module in the program is a latent decision by the model since the only feedback available is for the final output of the program.  The absence of any direct feedback to the intermediate modules complicates learning since the errors of one module would be passed on to the next.  Differentiable modules that propagate uncertainties in intermediate decisions help here, such as attention on pixels in CLEVR, but do not fully solve the learning challenges.
+
+
+\textbf{Joint Learning.}
+Jointly training the parser and executor increases the latent choices available to the model by many folds while the only supervision available is the gold answer.
+Additionally, joint learning is challenging as prediction errors from one component lead to incorrect training of the other.
+E.g., if the parser predicts the program \ttt{relocate(find())} for the question in Fig.~\ref{fig:02-nmn-overview}, then the associated modules would be incorrectly trained to predict the gold answer. On the next iteration, incorrect program execution would provide the wrong feedback to the question parser and lead to its incorrect training, and learning fails.
+
+
+\subsection{Modules for Reasoning over Text}
+\label{ssec:modules}
+Modules are designed to perform basic independent reasoning tasks and form the basis of the compositional reasoning that the model is capable of.
+We identify a set of tasks that need to be performed to support diverse enough reasoning capabilities over text, numbers, and dates, and define modules accordingly.
+Since the module parameters will be learned jointly with the rest of the model, we would like the modules to maintain uncertainties about their decisions and propagate them through the decision making layers via end-to-end differentiability.
+One of the main contributions of our work is introducing differentiable modules that perform reasoning over text and symbols in a probabilistic manner.
+Table~\ref{tab:02-modules} gives an overview of representative modules and \S\ref{sssec:neuralmodules} describes them in detail.
+% For example, a \ttt{find} module could take as input a \textit{question-span} ("field goals" in Figure \red{OV}) and ground it in the paragraph to output relevant \textit{paragraph-spans}. Similarly, a \ttt{max} module could take as input a set of numbers, and output the maximum number amongst them.
+% Our modules need to able to operate over different types of information, such as natural language text, numbers, and dates.
+
+\begin{table}[ht!]
+\centering
+\small
+\begin{tabular}{lccl}
+\toprule
+\bf Module & \bf In & \bf Out & \bf Task \\
+\midrule
+\ttt{find}  & \typeQues & \typePara & For question spans in the input, find similar spans in the passage \\
+\ttt{filter}  & \typeQues, \typePara & \typePara & Based on the question, select a subset of spans from the input \\
+\ttt{relocate}  & \typeQues, \typePara & \typePara & Find the argument asked for in the question for input paragraph spans \\
+\ttt{find-num}  & \typePara  & \typeNum & \multirow{2}{*}{Find the number(s) / date(s) associated to the input paragraph spans}  \\
+\ttt{find-date}  & \typePara  & \typeDate & \\
+\ttt{count}  & \typePara  & \typeCount & Count the number of input passage spans \\
+\ttt{compare-num-lt}  & \typePara, \typePara  & \typePara & Output the span associated with the smaller number. \\
+\ttt{time-diff} & \typePara, \typePara  & \typeTD &  Difference between the dates associated with the paragraph spans \\
+\ttt{find-max-num}  & \typePara & \typePara & Select the span that is associated with the largest number \\
+\ttt{span}  & \typePara & \typeSpan & Identify a contiguous span from the attended tokens \\
+\bottomrule
+\end{tabular}
+\caption{
+    \label{tab:02-modules}
+    Description of the modules we define and their expected behaviour. All inputs and outputs are represented as distributions over tokens, numbers, and dates as described in \S\ref{sssec:datatypes}.
+}
+\end{table}
+
+
+\subsubsection{Data Types}
+\label{sssec:datatypes}
+The modules operate over the following data types. Each data type represents its underlying value as a normalized distribution over the relevant support.
+\begin{itemize}[nosep]
+    \item
+\textbf{Question (\typeQues) and Paragraph (\typePara) attentions:} soft subsets of relevant tokens in the text.
+
+    \item
+\textbf{Number (\typeNum) and Date (\typeDate):} soft subset of unique numbers and dates from the passage.
+\footnote{We extract numbers and dates as a pre-processing step.}
+
+    \item
+\textbf{Count Number (\typeCount):} count value as a distribution over the supported count values ($0-9$).
+
+    \item
+\textbf{Time Delta (\typeTD):} a value amongst all possible unique differences between dates in the paragraph.
+In this work, we consider differences in terms of years.
+
+    \item
+\textbf{Span (\typeSpan):} span-type answers as two probability values (start/end) for each paragraph token.
+\end{itemize}
+
+
+
+\subsubsection{Neural Modules for Question Answering}
+\label{sssec:neuralmodules}
+% Here we describe the modules we use in our model.
+The question and paragraph contextualized embeddings ($\boldQ$ and $\boldP$) are available as global variables to all modules in the program. The question attention computed by the decoder during the timestep the module was produced is also available to the module as a side argument, as described in \S\ref{sssec:components}. We describe some representative modules here; refer to appendix~\ref{appendix:modules} for details about other modules.
+
+\paragraph{\ttt{find(Q)} $\rightarrow$ \ttt{P}}
+This module is used to ground attended question tokens to similar tokens in the paragraph (e.g., ``field goal'' in Figure \ref{fig:02-nmn-overview}).
+We use a question-to-paragraph attention matrix $\mB{A} \in \RealR^{n \times m}$ whose $i$-th row is the distribution of similarity over the paragraph tokens for the $i$-th question token.
+The output is an \textit{expected} paragraph attention; a weighted-sum of the rows of $\mB{A}$, weighed by the input question attention, $P = \sum_i Q_i \cdot \mB{A}_{i:} \; \in \RealR^{m}$.
+% \begin{equation*}
+%     P = \sum_i Q_i \cdot \mB{A}_{i:} \;\; \in \RealR^{m}
+% \end{equation*}
+$\mB{A}$ is computed by normalizing (using softmax) the rows of a question-to-paragraph similarity matrix $\mB{S} \in \RealR^{n \times m}$.
+Here $\mB{S}_{ij}$ is the similarity between the contextual embeddings of the $i$-th question token and the $j$-th paragraph token computed as, $\mathbf{S}_{ij} = \mathbf{w_{f}}^{T} [\boldQrow{i}\, ; \boldProw{j}\, ; \boldQrow{i} \circ \boldProw{j}]$, where $\mathbf{w_{f}} \in \RealR^{3d}$ is a learnable parameter vector of this module, $[;]$ denotes the concatenation operation, and $\circ$ is elementwise multiplication.
+
+
+% \item
+\paragraph{\ttt{find-num(\typePara)} $\rightarrow$ \typeNum}\mbox{}%\\
+% \textbf{\ttt{find-num(\typePara)} $\rightarrow$ \typeNum}\mbox{}\\
+This module finds a number distribution associated with the input paragraph attention.
+% tokens attended to in
+We use a paragraph token-to-number-token attention map $\mB{A^{\text{num}}} \in \RealR^{m \times \Ntokens}$ whose $i$-th row is probability distribution over number-containing tokens for the $i$-th paragraph token.
+% 's association with the number-tokens in the paragraph.
+We first compute a token-to-number similarity matrix $\mB{S}^{\text{num}} \in \RealR^{m \times \Ntokens}$ as, $\mB{S^{\text{num}}}_{i, j} = \boldProw{i}^{T} \mB{W_{\text{num}}} \boldProw{n_{j}}$,
+% \begin{equation*}
+%     \mB{S^{\text{number}}}_{i, j} = \boldProw{i}^{T} \mB{W_{\text{number}}} \boldProw{n_{j}}
+% \end{equation*}
+where $n_{j}$ is the index of the $j$-th number token and $\mB{W_{\text{num}}} \in \RealR^{d \times d}$ is a learnable parameter. $\mB{A^{\text{num}}}_{i:} = \text{softmax}(\mB{S^{\text{num}}}_{i:})$.
+% Normalizing the rows of $\mB{S^{\text{number}}}$ using \textit{softmax} yields $\mB{A^{\text{number}}}$.
+%
+We compute an \textit{expected} distribution over the number tokens $T = \sum_{i} P_{i}\cdot \mB{A^{\text{num}}}_{i:}$ and aggregate the probabilities for number-tokens with the same value to compute the output distribution~$N$.
+For example, if the values of the number-tokens are [\textit{2}, \textit{2}, \textit{3}, \textit{4}] and $T = [0.1, 0.4, 0.3, 0.2]$, the output will be a distribution over $\{2, 3, 4\}$ with $N = [0.5, 0.3, 0.2]$.
+
+% \item
+
+\paragraph{\ttt{count(\typePara)} $\rightarrow$ \typeCount}\mbox{}%\\
+\noindent
+This module is used to count the number of attended paragraph spans. The idea is to learn a module that detects contiguous spans of attention values and counts each as one. For example, if an attention vector is $[0, 0, 0.3, 0.3, 0, 0.4]$, the count module should produce an output of $2$.
+%
+The module first scales the attention using the values $[1, 2, 5, 10]$ to convert it into a matrix $P_{\text{scaled}} \in \RealR^{m \times 4}$.
+A bidirectional-GRU then represents each token attention as a hidden vector $h_{t}$. A single-layer feed-forward network maps this representation to a soft $0$/$1$ score to indicate the presence of a span surrounding it. These scores are summed to compute a count value, $c_{v} =\sum \sigma \left( FF (\text{countGRU}(P_{\text{scaled}})) \right) \; \in  \RealR$.
+We hypothesize that the output count value is normally distributed with $c_{v}$ as mean, and a constant variance $v=0.5$, and compute a categorical distribution over the supported count values, as $p(c) \propto \exp ( \nicefrac{-(c - c_{v})^2}{2v^{2}} ) \;\; \forall c \in [0, 9]$.
+Pretraining this module by generating synthetic data of attention and count values helps. % (see \S\ref{app:pretrain-count}).
+
+% \item
+\paragraph{\ttt{compare-num-lt(\typePara 1, \typePara 2)}~$\rightarrow$~\typePara}\mbox{}%\\
+\noindent
+This module performs a soft less-than operation between two passage distributions. For example, to find \textit{the city with fewer people, cityA or cityB},
+% where the paragraph attentions corresponding to mentions of \textit{cityA} and \textit{cityB}
+the module would output a linear combination of the two input attentions weighted by which city was associated with a lower number.
+%
+This module internally calls the \ttt{find-num} module to get a number distribution for each of the input paragraph attentions, $N_{1}$ and $N_{2}$. It then computes two soft boolean values, $p(N_{1} < N_{2})$ and $p(N_{2} < N_{1})$, and outputs a weighted sum of the input paragraph attentions. The boolean values are computed by marginalizing the relevant joint probabilities:
+\begin{align*}
+    p(N_{1} < N_{2}) = \sum_{i} \sum_{j}  \mathbbm{1}_{N_1^{i} < N_2^{j}} N_1^{i} N_2^{j} &&
+    p(N_{2} < N_{1}) = \sum_{i} \sum_{j}  \mathbbm{1}_{N_2^{i} < N_1^{j}} N_2^{i} N_1^{j}
+\end{align*}
+The final output is, $\ttt{P}_{out} = p(N_{1} < N_{2}) * \typePara_{1} + p(N_{2} < N_{1}) * \typePara_{2}$.
+% \begin{equation*}
+%     \ttt{P}_{out} = p(N_{1} < N_{2}) * \typePara_{1} + p(N_{2} < N_{1}) * \typePara_{2}
+% \end{equation*}
+When the the predicted number distributions are peaky, $p(N_{1} < N_{2})$ or $p(N_{2} < N_{1})$ is close to $1$, and the output is either $P_{1}$ or $P_{2}$.
+
+We similarly include the comparison modules \ttt{compare-num-gt}, \ttt{compare-date-lt}, and \ttt{compare-date-gt}, defined in an essentially identical manner, but for greater-than and for dates.
+
+
+% \item
+% \noindent
+\paragraph{\ttt{find-max-num(\typePara)}~$\rightarrow$~\typePara, \ttt{find-min-num(\typePara)}~$\rightarrow$~\typePara}\mbox{}%\\
+\noindent
+Given a passage attention attending to multiple spans, this module outputs an attention for the span associated with the largest (or smallest) number. We first compute an expected number token distribution $T$ using \ttt{find-num}, then use this to compute the expected probability that each number token is the one with the maximum value, $T^{\text{max}} \in \RealR^{\Ntokens}$ (explained below). We then re-distribute this distribution back to the original passage tokens associated with those numbers.
+%
+The contribution from the $i$-th paragraph token to the $j$-th number token, $T_{j}$, was $P_{i}\cdot \mB{A^{\text{num}}}_{ij}$.
+To compute the new attention value for token $i$, we re-weight this contribution based on the ratio $\nicefrac{T^{\text{max}}_{j}}{T_{j}}$ and marginalize across the number tokens to get the new token attention value: $\bar{P}_{i} = \sum_{j} \nicefrac{T^{\text{max}}_{j}}{T_{j}} \cdot P_{i}\cdot \mB{A^{\text{num}}}_{ij}$.
+
+\textbf{Computing $T^{\text{max}}$}:
+% The high-level idea is to sample a set of numbers (without repetition) from the input distribution, and ...
+% Consider a distribution over numbers $N$, where $N$ is sorted in an increasing order.
+Consider a distribution over numbers $N$, sorted in an increasing order.
+Say we sample a set $S$ (size $n$) of numbers from this distribution. The probability that $N_{j}$ is the largest number in this set is $p(x \leq N_{j})^{n} - p(x \leq N_{j - 1})^{n}$
+i.e. all numbers in $S$ are less than or equal to $N_{j}$, and at least one number is $N_{j}$.  By picking the set size $n=3$ as a hyperparameter, we can analytically (and differentiably) convert the expected distribution over number tokens, $T$, into a distribution over the maximum value $T^{\text{max}}$.
+
+
+
+\subsection{Auxiliary Supervision}
+\label{ssec:heuristicsupervision}
+As mentioned in \S\ref{sssec:challenges}, jointly learning the parameters of the parser and the modules using only end-task QA supervision is extremely challenging.
+To overcome issues in learning,
+(a) we introduce an unsupervised auxiliary loss to provide an inductive bias to the execution of \ttt{find-num}, \ttt{find-date}, and \ttt{relocate} modules~(\S\ref{sssec:hloss});
+and (b) provide heuristically-obtained supervision for question program and intermediate module output (\S\ref{sssec:hqsup}) for a subset of questions (5--10\%).
+
+\subsubsection{Unsupervised Auxiliary Loss for IE}
+\label{sssec:hloss}
+The \ttt{find-num}, \ttt{find-date}, and \ttt{relocate} modules perform information extraction by finding relevant arguments for entities and events mentioned in the context. In our initial experiments we found that these modules would often spuriously predict a high attention score for output tokens that appear far away from their corresponding inputs.
+We introduce an auxiliary objective to induce the idea that the arguments of a mention should appear near it.
+For any token, the objective increases the sum of the attention probabilities for output tokens that appear within a window $W=10$, letting the model distribute the mass within that window however it likes.
+The objective for the \ttt{find-num} is
+\begin{equation*}
+    H^{\text{n}}_{\text{loss}} = - \sum_{i=1}^{m} \log \Big(\sum_{j=0}^{\Ntokens} \mathbbm{1}_{n_{j} \in [i\pm W]} \mB{A^{\text{num}}}_{ij}\Big)
+\end{equation*}
+% where $n_{j}$ is the token index of the $j$-th number-token, and $W=10$.
+We compute a similar loss for the date-attention map $\mB{A^{\text{date}}}$ ($H^{\text{d}}_{\text{loss}}$) and the relocate-map $\mB{R}$ ($H^{\text{r}}_{\text{loss}}$). The final auxiliary loss is
+$H_{\text{loss}} = H^{\text{n}}_{\text{loss}} + H^{\text{d}}_{\text{loss}} + H^{\text{r}}_{\text{loss}}$.
+
+\subsubsection{Question Parse and Intermediate Module Output Supervision}
+\label{sssec:hqsup}
+\paragraph{Question Parse Supervision.}
+Learning to parse questions in a noisy feedback environment is very challenging.
+For example, even though the questions in CLEVR are programmatically generated,~\newcite{n2nmn-2017} needed to pre-train their parser using external supervision for all questions. For DROP, we have no such external supervision. In order to bootstrap the parser, we analyze some questions manually and come up with a few heuristic patterns to get program and corresponding question attention supervision (for modules that require it) for a subset of the training data (10\% of the questions).
+For example, for program \ttt{find-num(find-max-num(find()))}, we provide supervision for question tokens to attend to when predicting the \ttt{find} module.
+
+\paragraph{Intermediate Module Output Supervision.}
+Consider the question, ``how many yards was the shortest goal?''.
+The model only gets feedback for how long the \textit{shortest goal} is, but not for other \textit{goals}.
+Such feedback biases the model in predicting incorrect values for intermediate modules (only the shortest goal instead of all in \ttt{find-num}) which in turn hurts model generalization.
+
+We provide heuristically-obtained noisy supervision for the output of the \ttt{find-num} and \ttt{find-date} modules for a subset of the questions (5\%) for which we also provide question program supervision. For questions like ``how many yards was the longest/shortest touchdown?'', we identify all instances of the token ``touchdown'' in the paragraph and assume the closest number to it should be an output of the \ttt{find-num} module. We supervise this as a multi-hot vector $N^{*}$ and use an auxiliary loss, similar to question-attention loss, against the output distribution $N$ of \ttt{find-num}. We follow the same procedure for a few other question types involving dates and numbers. % ; see \S\ref{app:msup} for details.
+
+
+\subsection{Experiments}
+\label{ssec:exp}
+
+\subsubsection{Dataset}
+\label{sssec:dataset}
+We perform experiments on a portion of the recently released DROP dataset~\cite{drop-2019}, which to the best of our knowledge is the only dataset that requires the kind of compositional and symbolic reasoning that our model aims to solve. Our model possesses diverse but limited reasoning capability; hence, we try to automatically extract questions in the scope of our model based on their first n-gram.
+These n-grams were selected by performing manual analysis on a small set of questions.
+The dataset we construct contains $20,000$ questions for training/validation, and $1800$ questions for testing~($25\%$ of DROP). Since the DROP test set is hidden, this test set is extracted from the validation data.
+Though this is a subset of the full DROP dataset it is still a significantly-sized dataset that allows drawing meaningful conclusions.
+Based on the manual analysis we classify these questions into different categories, which are:
+\\
+\textbf{Date-Compare} e.g. \textit{What happened last, commission being granted to Robert or death of his cousin?}\\
+\textbf{Date-Difference} e.g. \textit{How many years after his attempted assassination was James II coronated?}\\
+\textbf{Number-Compare} e.g. \textit{Were there more of cultivators or main agricultural labourers in Sweden?}\\
+\textbf{Extract-Number} e.g. \textit{How many yards was Kasay's shortest field goal during the second half?}\\
+\textbf{Count} e.g. \textit{How many touchdowns did the Vikings score in the first half?}\\
+\textbf{Extract-Argument} e.g. \textit{Who threw the longest touchdown pass in the first quarter?}
+
+
+\textbf{Auxiliary Supervision}
+Out of the $20,000$ training questions, we provide question program supervision for $10\%$ ($2000$), and intermediate module output supervision for $5\%$ ($1000$) of training questions. We use curriculum learning~\cite{bengio-curriculum-2009} where the model is trained only on heuristically-supervised non-count questions for the first $5$ epochs.
+
+\subsubsection{Results}
+\label{sssec:results}
+We compare to publicly available best performing models: NAQANet~\cite{drop-2019}, NABERT$\text{+}$~\cite{nabert-2019}, TAG-NABERT$+$~\cite{tagbert-2019}, and MTMSN~\cite{mtmsn-2019}, all trained on the same data as our model.
+% We implement our model using AllenNLP~\cite{allennlp-gardner-2018}.
+% \footnote{Our code is available at \url{https://github.com/nitishgupta/nmn-drop}}
+
+\paragraph{Overall.} Table~\ref{tab:02-mainresults} compares our model's performance to state-of-the-art models on our full test set.
+Our model achieves an F1 score of $73.1$ (w/ GRU) and significantly outperforms NAQANet ($62.1$ F1).
+Using BERT representations, our model's performance increases to $77.4$ F1 and outperforms SoTA models that use BERT representations, such as MTMSN (76.5 F1).
+This shows the efficacy of our proposed model in understanding complex compositional questions and performing multi-step reasoning over natural language text. Additionally, this shows that structured models still benefit when used over representations from large pretrained-LMs, such as BERT.
+
+\begin{table}[tb]
+\begin{subtable}[h]{0.4\textwidth}
+\footnotesize
+\centering
+    \begin{tabular}{l c c}
+    \toprule
+    \bf Model & \bf F1 & \bf EM \\
+    \midrule
+    \textsc{NAQANet}                    & 62.1 & 57.9 \\
+    \addlinespace[1mm]
+    \textsc{TAG-NABERT+}                 & 74.2 & 70.6 \\
+    \textsc{NABERT+}                    & 75.4 & 72.0 \\
+    \textsc{MTMSN}                      & 76.5 & 73.1 \\
+    \addlinespace[1mm]
+    \textsc{Our Model (w/ GRU)}            & 73.1 & 69.6 \\
+    \textsc{Our Model (w/ BERT)}           & \textbf{77.4} & \textbf{74.0} \\
+    % \midrule
+    % \textsc{NAQANet (full-training-data)}   & 75.5 & 71.7 \\
+    \bottomrule
+    \end{tabular}
+    \caption{
+        \label{tab:02-mainresults}
+        \textbf{Performance on $\drop$ (pruned)}
+    }
+\end{subtable}
+\hspace{1cm}
+\begin{subtable}[h]{0.4\textwidth}
+\footnotesize
+\centering
+	\begin{tabular}{l c c}
+        \toprule
+        \multirow{2}{*}{{\bf Question Type}}         & \multirow{2}{*}{{\bf MTMSN}}    &    {\bf Our Model} \\
+        &                &    {\bf (w/ BERT)} \\
+        \midrule
+        \textsc{Date-Compare} ($18.6\%$)       & \textbf{85.2} & 82.6           \\
+        \textsc{Date-Difference} ($17.9\%$)    & 72.5          & \textbf{75.4}  \\
+        \textsc{Number-Compare} ($19.3\%$)     & 85.1          & \textbf{92.7}  \\
+        \textsc{Extract-Number} ($13.5\%$)     & 80.7          & \textbf{86.1}  \\
+        \textsc{Count} ($17.6\%$)              & \textbf{61.6} & 55.7           \\
+        \textsc{Extract-Argument} ($12.8\%$)   & 66.6          & \textbf{69.7}  \\
+        \bottomrule
+        \end{tabular}
+        \caption{
+            \label{tab:02-qtype}
+            \textbf{Performance by Question Type (F1)}
+        }
+\end{subtable}
+\caption{
+    \label{tab:02-perf}
+    \textbf{Performance of different models on the dataset and across different question types}.
+}
+\end{table}
+
+
+\paragraph{Performance by Question Type.} Table~\ref{tab:02-qtype} shows the performance for different question types as identified by our heuristic labeling.
+% We see that o
+Our model outperforms MTMSN on majority of question types but struggles with counting questions; it outperforms MTMSN on only some of the runs.
+Even after pre-training the count module using synthetic data, training it is particularly unstable.
+We believe this is because feedback from count questions is weak, i.e., the model only gets feedback about the count value and not what the underlying set is; and because it was challenging to define a categorical count distribution given a passage attention distribution---
+finding a better way to parameterize this function is an interesting problem for future work.
+
+\paragraph{Effect of Additional Supervision.}
+Figure~\ref{tab:02-supablation} shows that the unsupervised auxiliary objective significantly improves model performance (from $57.3$ to $73.1$ F1). The model using BERT diverges while training without the auxiliary objective.
+Additionally, the intermediate module output supervision has slight positive effect on the model performance.
+
+
+\begin{figure}[tb]
+    \begin{subfigure}{0.45\linewidth}
+        \centering
+        \footnotesize
+        \begin{tabular}{c c@{\hskip 0.2cm} c c}
+            \toprule
+            \multicolumn{2}{c}{\bf Supervision Type} & \multirow{2}{*}{\bf w/ BERT}  & \multirow{2}{*}{\bf w/ GRU} \\
+            \cmidrule(lr){1-2}
+            % {\sc QP-sup} &
+            $H_{\text{loss}}$ & \textsc{Mod-sup} &   &  \\
+            \midrule %(lr){1-5}
+            % \cmark  &
+            \cmark & \cmark   & \textbf{77.4} & \textbf{73.1} \\
+            % \cmark  &
+            \cmark &          & 76.3          & 71.8          \\
+            % \cmark  &
+            & \cmark          & --*           & 57.3 \\
+            \bottomrule
+        \end{tabular}
+        \caption{
+            \label{tab:02-supablation}
+            \textbf{Effect of Auxiliary Supervision:}
+            The auxiliary loss contributes significantly to the performance, whereas module output supervision has little effect. \textit{*Training diverges without $H_{\text{loss}}$ for the BERT-based model.}
+        }
+        \label{fig:trperc}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.5\linewidth}
+        \centering
+        \includegraphics[width=0.65\textwidth]{02-training_sample_curve.png}
+        \caption{
+            \label{fig:02-trperc}
+            \textbf{Performance with less training data}: Our model performs significantly better than the baseline with less training data, showing the efficacy of explicitly modeling compositionality.
+        }
+    \end{subfigure}
+
+    \caption{\label{tab:02-ablation}
+            Effect of auxiliary losses and the size of training data on model performance.
+    }
+\end{figure}
+
+
+\subsection{Limitations and Future Directions}
+We try a trivial extension to our model by adding a module that allows for addition $\&$ subtraction between two paragraph numbers. The resulting model achieves a score of $65.4$ F1 on the complete validation data of DROP, as compared to MTMSN that achieves $72.8$ F1.
+
+Manual analysis of predictions reveals that a significant majority of mistakes are due to insufficient reasoning capability in our model and would require designing additional modules. For example, questions such as (a) “How many languages each had less than $115,000$ speakers in the population?” and “Which racial groups are smaller than $2\%$?” would require pruning passage spans based on the numerical comparison mentioned in the question; (b) “Which quarterback threw the most touchdown passes?” and “In which quarter did the teams both score the same number of points?” would require designing modules that considers some key-value representation of the paragraph; (c) “How many points did the packers fall behind during the game?” would require IE for implicit argument (points scored by the other team).
+It is not always clear how to design interpretable modules for certain operations; for example, for the last two cases above.
+
+It is worth emphasizing here what happens when we try to train our model on these questions for which our modules \emph{can't} express the correct reasoning.  The modules in the predicted program get updated to try to perform the reasoning anyway, which harms their ability to execute their intended operations (cf. \S\ref{sssec:challenges}).  This is why we focus on only a subset of the data when training our model.
+
+In part due to this training problem, some other mistakes of our model relative to MTMSN on the full dataset are due to incorrect execution of the intermediate modules. For example, incorrect grounding by the find module, or incorrect argument extraction by the find-num module. For mistakes such as these, our NMN based approach allows for identifying the cause of mistakes and supervising these modules using additional auxiliary supervision that is not possible in black-box models.
+This additionally opens up avenues for transfer learning where modules can be independently trained using indirect or distant supervision from different tasks. Direct transfer of reasoning capability in black-box models is not so straight-forward.
+
+To solve both of these classes of errors, one could use black-box models, which gain performance on some questions at the expense of limited interpretability.  It is not trivial to combine the two approaches, however.  Allowing black-box operations inside of a neural module network significantly harms the interpretability---e.g., an operation that directly answers a question after an encoder, mimicking BERT-QA-style models, encourages the encoder to perform complex reasoning in a non-interpretable way. This also harms the ability of the model to use the interpretable modules even when they would be sufficient to answer the question.
+% Additionally, due to our lack of supervised programs, training the network to use the interpretable modules instead of a black-box shortcut module is challenging, further compounding the issue.
+Additionally, due to our lack of supervised programs, training the network to use the interpretable modules instead of a black-box shortcut module is challenging, further compounding the issue.
+Combining these black-box operations with the interpretable modules that we have presented is an interesting and important challenge for future work.
+
+
+\subsection{Conclusion}
+We show how to use neural module networks to answer compositional questions requiring symbolic reasoning against natural language text.
+We define probabilistic modules that propagate uncertainty about symbolic reasoning operations in a way that is end-to-end differentiable.
+Additionally, we show that injecting inductive bias using unsupervised auxiliary losses significantly helps learning.
+
+While we have demonstrated marked success in broadening the scope of neural modules and applying them to open-domain text, it remains a significant challenge to extend these models to the full range of reasoning required even just for the DROP dataset.
+NMNs provide interpretability, compositionality, and improved generalizability, but at the cost of restricted expressivity as compared to more black box models.
+Future research is necessary to continue bridging these reasoning gaps.
+
+
+\biblio
+
+\end{document}

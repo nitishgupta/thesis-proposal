@@ -1,8 +1,50 @@
 \documentclass{article}
 \begin{document}
 
-\subsection{Subsection R}
-\label{appendix:senseclus}
+\section{Appendix}
+
+\subsection{Modules for question answering}
+\label{appendix:modules}
+Here we describe other modules in our model not described in \S\ref{sssec:neuralmodules}
+
+
+\paragraph{\ttt{filter(Q, P)} $\rightarrow$ \ttt{P}}\mbox{}
+% \textbf{\ttt{filter(Q, P)} $\rightarrow$ \ttt{P}}\mbox{}\\
+This module masks the input paragraph attention conditioned on the question, selecting a subset of the attended paragraph (e.g., selecting fields goals ``in the second quarter'' in Fig.~\ref{fig:02-nmn-overview}).
+% if the question asks for ones \textit{in the first half}.
+% the output should be a pruned attention version of the input.
+We compute a \textit{locally-normalized} paragraph-token mask $M \in \RealR^{m}$ where $M_{j}$ is the masking score for the $j$-th paragraph token computed as
+% a masking-score computed using the question-vector and the $j$-th paragraph token's contextual embedding as,
+$M_{j} = \sigma (\mB{w_{filter}}^{T} [\mB{q}\, ; \boldProw{j}\, ; \mB{q} \circ \boldProw{j}] )$. Here $\mB{q} = \sum_{i} Q_{i} \cdot \boldQrow{i} \in \RealR^{d}$, is a weighted sum of question-token embeddings, $\mB{w_{filter}}^{T} \in \RealR^{3d}$ is a learnable parameter vector, and $\sigma$ is the \textit{sigmoid} non-linearity function.
+The output is a normalized masked input paragraph attention, $P_{\text{filtered}} = \text{normalize}(M \circ P)$.
+% \begin{equation*}
+%     P_{\text{filtered}} = \text{normalize}(M \circ P)
+% \end{equation*}
+
+% \item
+\paragraph{\ttt{relocate(Q, P)} $\rightarrow$ \typePara}\mbox{}%\\
+% \textbf{\ttt{relocate(Q, P)} $\rightarrow$ \typePara}\mbox{}\\
+This module re-attends to the paragraph based on the question and is used to find the arguments for paragraph spans (e.g., shifting the attention from ``field goals'' to ``who kicked'' them).
+% To compute the new paragraph attention
+We first compute a paragraph-to-paragraph attention matrix $\mB{R} \in \RealR^{m \times m}$ based on the question, as $\mathbf{R}_{ij} = \mB{w_{relocate}}^{T} [(\mB{q} + \boldProw{i}) \, ; \boldProw{j}\, ; (\mB{q} + \boldProw{i}) \circ \boldProw{j}]$, where $\mB{q} = \sum_{i} Q_{i} \cdot \boldQrow{i} \in \RealR^{d}$, and $\mB{w_{relocate}} \in \RealR^{3d}$ is a learnable parameter vector.
+Each row of $\mB{R}$ is also normalized using the softmax operation.
+The output attention is a weighted sum of the rows $\mB{R}$ weighted by the input paragraph attention, $P_{\text{relocated}} = \sum_{i} P_{i}\cdot \mB{R}_{i:}$
+
+\textbf{\ttt{find-date(\typePara)} $\rightarrow$ \typeDate}
+follows the same process as above to compute a distribution over dates for the input paragraph attention. The corresponding learnable parameter matrix is $\mB{W_{\text{date}}} \in \RealR^{d \times d}$.
+
+
+\paragraph{\ttt{time-diff(\typePara 1, \typePara 2)}~$\rightarrow$~\typeTD}\mbox{}%\\
+The module outputs the difference between the dates associated with the two paragraph attentions as a distribution over all possible difference values. % based on the dates that appear in the paragraph.
+%
+The module internally calls the \ttt{find-date} module to get a date distribution for the two paragraph attentions, $D_{1}$ and ${D_{2}}$.
+The probability of the difference being $t_{d}$ is computed by marginalizing over the joint probability for the dates that yield this value, as $p(t_{d}) = \sum_{i, j} \mathbbm{1}_{(d_{i} - d_{j} = t_{d})}  D_{1}^{i} D_{2}^{j}$.
+
+\paragraph{\ttt{span(\typePara)}~$\rightarrow$~\typeSpan}\mbox{}%\\
+\noindent
+This module is used to convert a paragraph attention into a contiguous answer span and only appears as the outermost module in a program.  The module outputs two probability distributions, $P_{s}$ and $P_{e} \in \RealR^{m}$, denoting the probability of a token being the start and end of a span, respectively.
+This module is implemented similar to the \ttt{count} module. % (see~\S\ref{app:span}).
+
 
 \subsection{Subsection H}
 
