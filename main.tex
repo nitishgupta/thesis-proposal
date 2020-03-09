@@ -51,9 +51,9 @@
 
 
 %% TO TURN ON BIB FOR CHAPTER (when compiling chapters separately)
-\def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
+% \def\biblio{\bibliographystyle{apalike}\bibliography{references/primary}}
 %% TO TURN OFF BIB FOR EACH CHAPTER, (for compiling the whole thesis)
-% \def\biblio{}
+\def\biblio{}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
@@ -76,12 +76,10 @@
 % \newcommand{\drop}{\text{DROP}}
 \newcommand{\RealR}{\mathbb{R}}
 \newcommand{\ttt}[1]{\texttt{#1}}
-
 \newcommand{\Ntokens}{N_{\text{tokens}}}
 \newcommand{\Nvalues}{N_{\text{values}}}
 \newcommand{\Dtokens}{D_{\text{tokens}}}
 \newcommand{\Dvalues}{D_{\text{values}}}
-
 \newcommand{\boldP}{\mathbf{P}}
 \newcommand{\boldProw}[1]{\mathbf{P}_{#1:}}
 \newcommand{\boldPcol}[1]{\mathbf{P}_{:#1}}
@@ -92,29 +90,22 @@
 \newcommand{\boldNrow}[1]{\mathbf{N}_{#1:}}
 \newcommand{\boldNcol}[1]{\mathbf{N}_{:#1}}
 \newcommand{\boldD}{\mathbf{D}}
-
 \newcommand{\typeQues}{\ttt{Q}}
 \newcommand{\typePara}{\ttt{P}}
-% \newcommand{\typeNum}{\ttt{Num}}
-% \newcommand{\typeDate}{\ttt{Date}}
 \newcommand{\typeNum}{\ttt{N}}
 \newcommand{\typeDate}{\ttt{D}}
-% \newcommand{\typeTD}{\ttt{TimeDelta}}
 \newcommand{\typeTD}{\ttt{TD}}
 \newcommand{\typeCount}{\ttt{C}}
 \newcommand{\typeSpan}{\ttt{S}}
-
 \newcommand{\cmark}{\ding{51}}
 \newcommand{\xmark}{\ding{55}}
-
 \newcommand{\mB}[1]{\mathbf{#1}}
-
-
 \newcommand{\Wnum}{\mathbf{W_{\text{num}}}}
 \newcommand{\Wdate}{\mathbf{W_{\text{date}}}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%    end of chapter 2    %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%    CHAPTER 3  %%%%%%%%%%%%%%%%%%%
@@ -122,7 +113,6 @@
 \newcommand\drop{\textsc{DROP}}
 \newcommand\nlvr{\textsc{NLVR2}}
 \newcommand{\qatt}{q_{\text{att}}}
-
 \newcommand{\LXMERT}{\textsc{LXMERT}}
 \newcommand{\CountSumNMN}{\textsc{CountSumNMN}}
 \newcommand{\CountLayerNMN}{\textsc{CountLayerNMN}}
@@ -132,6 +122,21 @@
 \newcommand{\CountModuleNMNMaskPretraining}{\textsc{CountModuleNMN+Mask+Pretraining}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%  End of Chapter 3  %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%    CHAPTER 4  %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\semtype}[1]{\textbf{#1}}
+\newcommand{\E}{\mathcal{E}}
+\newcommand{\R}{\mathcal{R}}
+
+\newcommand{\phiijk}{\psi_{i,k,j}}
+\newcommand{\phiijkmod}{\psi_{i, k, j}^{t_{1} + t_{2} \rightarrow t}}
+\newcommand{\phiijt}[3]{\psi_{#1, #2}^{#3}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%  End of Chapter 4  %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -191,6 +196,9 @@ Prof. Luke Zettlemoyer
 \pagebreak
 
 \subfile{sections/03-nmn-interpret}
+\pagebreak
+
+\subfile{sections/04-denotation}
 \pagebreak
 
 

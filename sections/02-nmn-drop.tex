@@ -13,7 +13,7 @@ These modules are designed to perform basic reasoning tasks and can be composed 
 NMNs perform well on synthetic visual question answering (VQA) domains such as CLEVR~\cite{clevr-2017} and it is appealing to apply them to answer questions over text due to their interpretable, modular, and inherently compositional nature.
 
 
-In this Chapter we present a neural module network for question answering against text as context.
+In this chapter we present a neural module network for question answering against text as context.
 We find that it is non-trivial to extend NMNs for answering non-synthetic questions against open-domain text, where a model needs to deal with the ambiguity and variability of real-world text while performing a diverse range of reasoning.  Jointly learning the parser and executor using only QA supervision is also extremely challenging (\S\ref{sssec:challenges}).
 
 % Our contributions are two-fold: Firstly, we extend NMNs to answer compositional questions against a paragraph of text as context.
@@ -287,7 +287,7 @@ Based on the manual analysis we classify these questions into different categori
 \textbf{Extract-Argument} e.g. \textit{Who threw the longest touchdown pass in the first quarter?}
 
 
-\textbf{Auxiliary Supervision}
+\paragraph{Auxiliary Supervision}
 Out of the $20,000$ training questions, we provide question program supervision for $10\%$ ($2000$), and intermediate module output supervision for $5\%$ ($1000$) of training questions. We use curriculum learning~\cite{bengio-curriculum-2009} where the model is trained only on heuristically-supervised non-count questions for the first $5$ epochs.
 
 \subsubsection{Results}
@@ -433,7 +433,7 @@ Additionally, we show that injecting inductive bias using unsupervised auxiliary
 
 While we have demonstrated marked success in broadening the scope of neural modules and applying them to open-domain text, it remains a significant challenge to extend these models to the full range of reasoning required even just for the DROP dataset.
 NMNs provide interpretability, compositionality, and improved generalizability, but at the cost of restricted expressivity as compared to more black box models.
-Future research is necessary to continue bridging these reasoning gaps.
+Our proposed future research aims to continue to bridge these reasoning gaps.
 
 
 \biblio
