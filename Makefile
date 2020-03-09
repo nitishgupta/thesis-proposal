@@ -5,6 +5,7 @@ all: main.pdf
 	-bibtex $*
 	pdflatex $<
 	pdflatex $<
+	cp main.pdf proposal.pdf
 01-introduction.pdf: 01-introduction.pdf
 	pdflatex sections/01-introduction.tex
 	bibtex 01-introduction.aux
@@ -32,3 +33,5 @@ all: main.pdf
 	pdflatex sections/05-future.tex
 clean:
 	rm -f *.aux *.dvi *.ps *.bbl *.blg *.out *.log *.toc *.lof *.lot *.nav *.snm *.bak *~ *.acn *.ist *.syg *.acn *.glsdefs *.ist *.syg main.pdf 01-introduction.pdf 05-future.pdf 02-nmn-drop.pdf 03-nmn-interpret.pdf 04-denotation.pdf
+proposal:
+	git add proposal.pdf; git commit -m "update proposal pdf"; git push origin master
