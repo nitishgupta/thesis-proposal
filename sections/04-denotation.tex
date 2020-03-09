@@ -99,8 +99,6 @@ The semantic types we define can be classified into three broad categories. \tex
 \end{enumerate}
 
 
-\input{sections/04-modules.tex}
-
 \paragraph{Partially-Grounded Semantic Types:}
 Spans of text that can only be partially grounded in the knowledge graph, such as \emph{and red} or \emph{are four spheres}. Here, we represent the span by a combination of a grounding and vectors, representing grounded and ungrounded aspects of meaning respectively.
 The grounded component of the representation will typically combine with another fully grounded representation, and the ungrounded vectors will parameterize the composition module.
@@ -115,7 +113,7 @@ The composition modules are parameterized by the trainable word vectors.
 These can be divided into several categories:
 
 \paragraph{Composition modules resulting in fully grounded denotations:} Described in Figure~\ref{fig:04-modules}.
-\textit{For some reason, this figure appears at the end of the proposal document; I will fix it.}
+\input{sections/04-modules.tex}
 
 
 
