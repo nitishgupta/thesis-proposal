@@ -7,7 +7,7 @@
 Answering complex compositional questions against text is challenging since it requires a comprehensive understanding of both the question semantics and the text against which the question needs to be answered.
 Consider the question in Figure~\ref{fig:02-nmn-overview}; a model needs to understand the compositional reasoning structure of the questions, perform accurate information extraction from the passage (eg. extract \textit{lengths}, \textit{kickers}, etc. for the \textit{field goals} and \textit{touchdowns}), and perform symbolic reasoning (eg. counting, sorting, etc.).
 
-Semantic parsing techniques have been used for compositional question understanding for a long time~\cite{zelle-1996,zettlemoyer-pccg-2005,liang-dcs-2011}, but have been limited to answering questions against structured and semi-structured knowledge sources.
+Semantic parsing techniques have been used for compositional question understanding for a long time~\cite{zelle-1996,zettlemoyer-pccg-2005,clarke-sp-2010,liang-dcs-2011}, but have been limited to answering questions against structured and semi-structured knowledge sources.
 Neural module networks~(NMNS;~\newcite{nmn-2016}) extend semantic parsers by making the program executor a \emph{learned function} composed of neural network modules.
 These modules are designed to perform basic reasoning tasks and can be composed to perform complex reasoning over unstructured knowledge.
 NMNs perform well on synthetic visual question answering (VQA) domains such as CLEVR~\cite{clevr-2017} and it is appealing to apply them to answer questions over text due to their interpretable, modular, and inherently compositional nature.
