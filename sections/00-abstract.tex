@@ -15,3 +15,13 @@ The biggest challenge in pursuing this direction, and also what excites me the m
 \end{abstract}
 
 \end{document}
+
+
+
+% Email abstract
+In the last decade, deep artificial neural network models have shown to achieve surprisingly exceptional performance on various natural language understanding tasks. Despite such successes, several studies have shown that these models fail embarrassingly on seemingly trivial problems. The black-box nature of such models makes it difficult to interpret and debug their decision making process.
+In this thesis, I focus on developing modular and compositional models that reason over natural language, specifically models that read and answer questions against text as context.
+My work focuses on models that provide an understanding of the question semantics in terms of a formal executable parse which is composed of learnable modules that can perform reasoning over open domain text.
+Such models are desirable for various reasons -- (a) being inherently compositional, such models should better capture the compositional nature of language and reasoning in general, (b) structured parse of the question and the outputs of intermediate steps make the model's decision making process interpretable and debuggable, (c) modular nature of the model allows for transfer of supervision and reasoning capability across various domains and tasks.
+Until now, we have shown how models that perform natural language and symbolic reasoning over text can be designed and trained using end-goal supervision [2, 3]. While such compositional models should be interpretable, we have also shown that it is difficult to achieve interpretability when trained in an end-to-end manner [1]. We have proposed a systematic and quantitative evaluation of interpretability and introduced ways to achieve it.
+Going forward, I am focussing on the following directions -- (a) extending the model to handle a broader class of linguistic constructions that require a symbolic interpretation, (b) understanding and improving systematic generalization in such models, and (c) achieving transfer of reasoning capability across domains and tasks by sharing modules and supervision.
